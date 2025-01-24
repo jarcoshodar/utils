@@ -200,13 +200,25 @@ read_and_build_network <- function(rds_path, csv_path, cell_type) {
   g
 }
 
+sighotspotter_file = "~/Documents/Final_Mohammed/sigFINAL/Exercise2_results3_Cerebellum_sighotspotter_hotspots_filtered_elements_all.rds"
+grni_file = "~/Documents/Final_Mohammed/genenetworks4/Exercise2_results_Integrated_Cerebellum_GRNI5NeurpOE_vs__NeurpOC.csv"
+comparison = "NeurpOE_vs_NeurpOC"
+  
 test_graph <- read_and_build_network(
-  rds_path = "~/Documents/Final_Mohammed/sigFINAL/Exercise2_results3_Cerebellum_sighotspotter_hotspots_filtered_elements_all.rds",
-  csv_path = "~/Documents/Final_Mohammed/genenetworks4/Exercise2_results_Integrated_Cerebellum_GRNI5NeurpOE_vs__NeurpOC.csv",
-  cell_type = "NeurpOE_vs_NeurpOC"
+  rds_path = sighotspotter_file,
+  csv_path = grni_file,
+  cell_type = comparison
 )
 
 # Inspect the graph:
 test_graph
-as_data_frame(test_graph, "vertices")  #see the node set, probably only this interacts with intercom but check all
-usable_result <- as_data_frame(test_graph, "edges")     # see columns like from, to, rds_effect, csv_effect, Score, ...
+as_data_frame(test_graph, "vertices")  
+#see the node set, probably only this interacts with intercom but check all
+usable_result <- as_data_frame(test_graph, "edges")     
+# see columns like from, to, rds_effect, csv_effect, Score, ...
+
+usable_result <- usable_result %>%
+  dplyr::rename(TF = from, target = to)
+#probably you prefer a filename that denotes this isn't just grni but merged,
+#but with above rename is compatible with score_single_file.py
+#write.csv(usable_result, "~/Documents/worktemp/test_merge_grni/GRNI5_NeurpOE_vs_NeurpOC.csv", row.names = FALSE, quote = FALSE)
