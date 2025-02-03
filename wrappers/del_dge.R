@@ -14,6 +14,7 @@ suppressPackageStartupMessages({
   library(DElegate)    #pseudobulk. see https://www.biorxiv.org/content/10.1101/2023.03.28.534443v2
   library(stringr)
 })
+options(future.globals.maxSize = 89128960000)
 # Expected Input Structure:
 # /path/to/root/
 # └── StudyName/
