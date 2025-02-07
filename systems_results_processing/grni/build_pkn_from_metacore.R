@@ -1,10 +1,14 @@
 library(dplyr)
 library(tidyr)
-
+library(tibble)  # Add this for deframe()
 #root with the xls files 
-folder_path <- '/home/jarcos/clean/decoup/pkns/'
+folder_path <- '/home/jarcos/clean/pkns/'
 
-
+clean_names <- function(df) {
+  names(df) <- gsub(" ", "_", names(df))  # Replace spaces with underscores
+  names(df) <- gsub("[\"']", "", names(df))  # Remove quotes
+  return(df)
+}
 filenames <- list.files(folder_path)
 
 #the convention followed is interaction exports called int1, int2, int3 etc. 
@@ -13,44 +17,48 @@ filenames <- list.files(folder_path)
 #you must open if your prefered excel equivalent and save as csv manually
 allint <- data.frame()
 allnet <- data.frame()
-
-
 for (filename in filenames) {
   filepath <- file.path(folder_path, filename)
+  
   if (startsWith(filename, 'int') && endsWith(filename, '.csv')) {
-    #read the first few lines to get the column names
-    header <- read.csv(filepath, skip = 2, nrows = 5, fileEncoding = "UTF-16LE", stringsAsFactors = FALSE)
-    col_names <- names(header)
-    #read entire file, harcoding column classes as character
-    df <- read.csv(filepath, skip = 2, fileEncoding = "UTF-16LE", stringsAsFactors = FALSE, colClasses = "character", col.names = col_names)
+    df <- read.csv(filepath, 
+                   skip = 2,
+                   header = TRUE,
+                   stringsAsFactors = FALSE,
+                   check.names = FALSE,
+                   quote = "\"",
+                   encoding = "UTF-8")
+    
+    df <- clean_names(df)  # Clean the column names
     allint <- bind_rows(allint, df)
+    
   } else if (startsWith(filename, 'net') && endsWith(filename, '.csv')) {
-    #read the first few lines to get the column names
-    header <- read.csv(filepath, skip = 2, nrows = 5, fileEncoding = "UTF-16LE", stringsAsFactors = FALSE)
-    col_names <- names(header)
-    #read entire file, harcoding column classes as character
-    df <- read.csv(filepath, skip = 2, fileEncoding = "UTF-16LE", stringsAsFactors = FALSE, colClasses = "character", col.names = col_names)
+    df <- read.csv(filepath,
+                   skip = 2,
+                   header = TRUE,
+                   stringsAsFactors = FALSE,
+                   check.names = FALSE,
+                   quote = "\"",
+                   encoding = "UTF-8")
+    
+    df <- clean_names(df)  # Clean the column names
     allnet <- bind_rows(allnet, df)
   }
 }
-
 #adjust the script to use the correct column names (may change, typically can be change . or enclose in `)
 temp <- data.frame(
-  TF_alias = allint$Network.Object..FROM.,
+  TF_alias = allint$`Network Object "FROM"`,
   interaction = allint$Effect,
-  target = allint$Network.Object..TO.,
+  target = allint$`Network Object "TO"`,
   stringsAsFactors = FALSE
 )
-
 #we only keep activation and inhibition
 temp <- temp[temp$interaction != 'Technical', ]
 
-#mapping from 'Network.Object.Name' to a list of 'Gene.Symbol's
 gene_dict <- allnet %>%
-  group_by(Network.Object.Name) %>%
-  summarise(Gene.Symbol = list(unique(Gene.Symbol))) %>%
+  group_by(Network_Object_Name) %>%      # Changed from Network.Object.Name
+  summarise(Gene_Symbol = list(unique(Gene_Symbol))) %>%  # Changed from Gene.Symbol
   deframe()
-
 #expand mappings for both columns simultaneously
 expand_mappings <- function(df) {
   df %>%
